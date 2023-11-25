@@ -95,6 +95,7 @@ public class Block : MonoBehaviour, IBlock
             // TODO: fix highlighting
             spriteRenderer.color = isHighlighter ? new Color(1f, 1f, 1f, 0.5f) : Color.white;
             
+            //Set outline if its a highlighter and disable the outline if its placed
             if (isHighlighter)
             {
                 Color c = Color.black;
@@ -105,6 +106,7 @@ public class Block : MonoBehaviour, IBlock
                     case 2: c = Color.red; break;
                     case 3: c = Color.yellow; break;
                 }
+
                 for(int j = 0; j < littleBlock.transform.childCount; j++)
                 {
                     littleBlock.transform.GetChild(j).GetComponent<SpriteRenderer>().color = c;

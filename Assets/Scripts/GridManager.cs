@@ -26,35 +26,22 @@ public class GridManager : MonoBehaviour
 
     [SerializeField] private GameManager gameManager;
 
-    // TODO: move player placing range into player
     [SerializeField] private float placingRange = 3f;
     [SerializeField] private float placingCooldown = 5f;
 
     [SerializeField] private float destroyCooldown = 5f;
-    [SerializeField] private float sacreficeCooldown = 5f;
     
     private bool canPlace = true;
     private bool canDestroy = true;
-    private bool canSacrifice = true;
 
     [SerializeField] private PhysicsMaterial2D groundPhysics;
 
     [SerializeField] private GameObject highlighterPrefab;
-
-    //[SerializeField] private GameObject grid;
     [SerializeField] private Grid grid;
 
-    private GameObject currentHighlighter;
-
     private Sprite currentSprite;
-    private Sprite nextSprite;
-    private Dictionary<Material, BlockData> allSprites;
 
-    //[SerializeField] private Sprite sealSprite;
-    //[SerializeField] private Sprite turtleSprite;
-    //[SerializeField] private Sprite crabSprite;
-    //[SerializeField] private Sprite fishSprite;
-    //[SerializeField] private Sprite birdSprite;
+    private Dictionary<Material, BlockData> allSprites;
 
     [SerializeField] private BlockData[] _blockDatas;
 
@@ -64,25 +51,12 @@ public class GridManager : MonoBehaviour
 
     private SoundManager _soundManager;
 
-    //testing
-    //private int currentRotation = 0;
-    Shape shape = Shape.oShape;
-
-    //private Grid grid;
-    // Start is called before the first frame update
-
     void Start()
     {
         _soundManager = GameObject.FindGameObjectWithTag("SoundManager").GetComponent<SoundManager>();
         gameManager = GameObject.FindGameObjectWithTag("GameManager").GetComponent<GameManager>();
-        //grid = new Grid(32, 256, 16);
 
         allSprites = new Dictionary<Material, BlockData>();
-        //allSprites.Add(Material.seal, sealSprite);
-        //allSprites.Add(Material.turtle, turtleSprite);
-        //allSprites.Add(Material.crab, crabSprite);
-        //allSprites.Add(Material.fish, fishSprite);
-        //allSprites.Add(Material.bird, birdSprite);
 
         grid = GameObject.FindGameObjectWithTag("Grid").GetComponent<Grid>();
 
@@ -163,7 +137,11 @@ public class GridManager : MonoBehaviour
         }
 
         currentCell = new Vector3(Mathf.Floor(currentCell.x), Mathf.Floor(currentCell.y));
-        HighlightCell(currentCell, currentSprite);
+        
+        if(canPlace)
+        {
+            HighlightCell(currentCell, currentSprite);
+        }
     }
 
     public void MoveBlock(InputAction.CallbackContext context)
@@ -190,7 +168,7 @@ public class GridManager : MonoBehaviour
 
     public void Sacrifice(InputAction.CallbackContext context)
     {
-        if (canSacrifice)
+        if (canPlace)
         {
             Material block = blocks.Item1.GetMaterial();
             blocks = DrawBlocks.DrawBlock(getPlayerId());
@@ -218,8 +196,12 @@ public class GridManager : MonoBehaviour
                     break;
             }
 
-            canSacrifice = false;
-            StartCoroutine(ResetSacrificeCooldown());
+            canPlace = false;
+            foreach (var oldHighlighter in littleBlocksHighlighter)
+            {
+                Destroy(oldHighlighter);
+            }
+            StartCoroutine(ResetPlacingCooldown());
         }
         
     }
@@ -316,7 +298,6 @@ public class GridManager : MonoBehaviour
 
             Destroy(shapeBlock);
             
-            
             Vector3 currentCell = new Vector3(Mathf.Floor(stickPosition.transform.position.x), Mathf.Floor(stickPosition.transform.position.y));
 
             if (!grid.GetCell((int)currentCell.x, (int)currentCell.y).GetHasBlockPlaced())
@@ -355,7 +336,12 @@ public class GridManager : MonoBehaviour
             {
                 blocks = DrawBlocks.DrawBlock(getPlayerId());
                 _soundManager.PlaySoundEffect(_soundManager.SoundEffects.BlockPlace);
+                HighlightCell(currentCell, currentSprite);
                 canPlace = false;
+                foreach (var oldHighlighter in littleBlocksHighlighter)
+                {
+                    Destroy(oldHighlighter);
+                }
                 StartCoroutine(ResetPlacingCooldown());
             }
         }
@@ -390,15 +376,6 @@ public class GridManager : MonoBehaviour
 
         // Set the flag to true, allowing the function to be called again
         canDestroy = true;
-    }
-    
-    private IEnumerator ResetSacrificeCooldown()
-    {
-        // Wait for one second
-        yield return new WaitForSeconds(sacreficeCooldown);
-
-        // Set the flag to true, allowing the function to be called again
-        canSacrifice = true;
     }
 
     private void DrawDebugGrid()

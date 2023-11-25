@@ -22,9 +22,5 @@ public class Cell
     public void RemoveBlock()
     {
         hasBlockPlaced = false;
-        if ( block != null )
-        {
-            //Object.Destroy(block, 0.5f);
-        }
     }
 }
