@@ -35,7 +35,7 @@ public class GridManager : MonoBehaviour
     
     private bool canPlace = true;
     private bool canDestroy = true;
-    private bool canSacrefice = true;
+    private bool canSacrifice = true;
 
     [SerializeField] private PhysicsMaterial2D groundPhysics;
 
@@ -188,15 +188,14 @@ public class GridManager : MonoBehaviour
         }
     }
 
-    public void Sacrefice(InputAction.CallbackContext context)
+    public void Sacrifice(InputAction.CallbackContext context)
     {
-
-        if (canSacrefice)
+        if (canSacrifice)
         {
             Material block = blocks.Item1.GetMaterial();
             blocks = DrawBlocks.DrawBlock(getPlayerId());
             // block = blocks.Item1;
-            Debug.Log(block);
+            
             switch (block)
             {
                 case Material.seal:
@@ -210,7 +209,7 @@ public class GridManager : MonoBehaviour
                     //Jump
                     break;
                 case Material.fish:
-                    _powerupManager.Stun();
+                    _powerupManager.Stun(gameObject.GetComponent<PlayerInformation>().playerID);
                     //Stun
                     break;
                 case Material.bird:
@@ -219,7 +218,7 @@ public class GridManager : MonoBehaviour
                     break;
             }
 
-            canSacrefice = false;
+            canSacrifice = false;
             StartCoroutine(ResetSacrificeCooldown());
         }
         
@@ -399,7 +398,7 @@ public class GridManager : MonoBehaviour
         yield return new WaitForSeconds(sacreficeCooldown);
 
         // Set the flag to true, allowing the function to be called again
-        canSacrefice = true;
+        canSacrifice = true;
     }
 
     private void DrawDebugGrid()

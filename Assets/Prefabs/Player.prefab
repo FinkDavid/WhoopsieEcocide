@@ -438,7 +438,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 4881771324887033975}
         m_TargetAssemblyTypeName: GridManager, Assembly-CSharp
-        m_MethodName: Sacrefice
+        m_MethodName: Sacrifice
         m_Mode: 0
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -469,14 +469,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   p_jumpingPower: 20
   p_speed: 8
-  pushStrength: 3000
+  pushStrength: 2
   pushAwayRadius: 10
   p_groundCheck: {fileID: 3806115717558593779}
   p_rigidbody: {fileID: 2473993603733835208}
   p_groundPlayer:
     serializedVersion: 2
     m_Bits: 64
-  stunTime: 1
+  canMove: 1
+  stunTime: 2
   remainingStun: 0
 --- !u!61 &2852336917324786100
 BoxCollider2D:
@@ -510,7 +511,7 @@ BoxCollider2D:
   m_IsTrigger: 0
   m_UsedByEffector: 0
   m_UsedByComposite: 0
-  m_Offset: {x: 0, y: -0.041239023}
+  m_Offset: {x: 0, y: -0.07949132}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
@@ -521,7 +522,7 @@ BoxCollider2D:
     adaptiveTiling: 0
   m_AutoTiling: 0
   serializedVersion: 2
-  m_Size: {x: 1, y: 2.4838753}
+  m_Size: {x: 1, y: 2.396442}
   m_EdgeRadius: 0
 --- !u!114 &-7990341635927988427
 MonoBehaviour:
@@ -577,7 +578,7 @@ MonoBehaviour:
   placingRange: 5
   placingCooldown: 3
   destroyCooldown: 5
-  sacreficeCooldown: 5
+  sacreficeCooldown: 1
   groundPhysics: {fileID: 6200000, guid: d928fd88ef46bcf49a88e12db0c171a6, type: 2}
   highlighterPrefab: {fileID: 6185488605100601086, guid: 08cd309b50435a048bdf3069e81b55f8, type: 3}
   grid: {fileID: 0}

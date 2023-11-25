@@ -30,20 +30,20 @@ public class PowerupManager : MonoBehaviour
         //     Freeze();
         // }
     }
-    public void Stun()
+    public void Stun(int playerID)
     {
         GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
-        float maxY=-999999;
-        int highestPlayer=-1;
+        float maxY = -999999;
+        int highestPlayer = -1;
         for (int i = 0; i < players.Length; i++)
         {
-            if (players[i].transform.position.y > maxY)
+            if(players[i].transform.position.y > maxY && players[i].GetComponent<PlayerInformation>().playerID != playerID)
             {
                 highestPlayer = i;
                 maxY = players[i].transform.position.y;
             }
         }
-        //players[highestPlayer].GetComponent<PlayerMovement>().SetStuned();
+        players[highestPlayer].GetComponent<PlayerMovement>().SetStunned();
     }
 
 
@@ -60,18 +60,37 @@ public class PowerupManager : MonoBehaviour
         GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
         if (players.Length == 2)
         {
-            (players[0].transform.position, players[1].transform.position) = (players[1].transform.position, players[0].transform.position);
+            //(players[0].transform.position, players[1].transform.position) = (players[1].transform.position, players[0].transform.position);
+            foreach(GameObject player in players)
+            {
+                player.GetComponent<Animator>().SetBool("swap", true);
+                player.GetComponent<PlayerMovement>().canMove = false;
+            }
+
+            Vector2 tempPos = players[0].transform.position;
+            players[0].GetComponent<Animator>().SetFloat("targetSwapX", players[1].transform.position.x);
+            players[0].GetComponent<Animator>().SetFloat("targetSwapY", players[1].transform.position.y);
+            players[1].GetComponent<Animator>().SetFloat("targetSwapX", tempPos.x);
+            players[1].GetComponent<Animator>().SetFloat("targetSwapY", tempPos.y);
+
             return;
         }
-        // Fisher-Yates shuffle algorith
         
+        
+        // Fisher-Yates shuffle algorith
         for (int i = players.Length - 1; i > 0; i--)
         {
             int j = r.Next(i + 1);
             // Swap positions
-            (players[i].transform.position, players[j].transform.position) = (players[j].transform.position, players[i].transform.position);
+            players[i].GetComponent<Animator>().SetBool("swap", true);
+            players[j].GetComponent<PlayerMovement>().canMove = false;
+            
+            Vector2 tempPos = players[0].transform.position;
+            players[0].GetComponent<Animator>().SetFloat("targetSwapX", players[1].transform.position.x);
+            players[0].GetComponent<Animator>().SetFloat("targetSwapY", players[1].transform.position.y);
+            players[1].GetComponent<Animator>().SetFloat("targetSwapX", tempPos.x);
+            players[1].GetComponent<Animator>().SetFloat("targetSwapY", tempPos.y);
         }
-     
     }
    
 }

@@ -16,7 +16,7 @@ public class PlayerMovement : MonoBehaviour
     private PowerupState _powerupState = PowerupState.None;
     [SerializeField] public float p_jumpingPower = 10f;
     [SerializeField] float p_speed = 10f;
-    [SerializeField] private float pushStrength = 3000;
+    [SerializeField] private float pushStrength = 1000;
     [SerializeField] private float pushAwayRadius=50000;
     bool p_facingRight = true;
     float horizontal;
@@ -25,11 +25,11 @@ public class PlayerMovement : MonoBehaviour
     public Rigidbody2D p_rigidbody;
     public LayerMask p_groundPlayer;
 
-    private bool canMove = true;
+    public bool canMove = true;
     
 
     [FormerlySerializedAs("stunnmTime")] [SerializeField]
-    private float stunTime = 0.5f;
+    private float stunTime = 2f;
 
     public float remainingStun;
 
@@ -70,16 +70,6 @@ public class PlayerMovement : MonoBehaviour
         if (remainingStun <= 0 && _powerupState == PowerupState.Stunned)
             _powerupState = PowerupState.None;
 
-        // if (Input.GetKey(KeyCode.P) && _powerupState == PowerupState.None)
-        // {
-        //     setJumpBoost();
-        // }
-        //
-        // if (Input.GetKeyDown(KeyCode.I) && _powerupState == PowerupState.None)
-        // {
-        //     Push();
-        // }
-
         p_rigidbody.velocity = new Vector2(horizontal * p_speed, p_rigidbody.velocity.y);
 
         float ratio = (float)Screen.width / (float)Screen.height;
@@ -97,79 +87,81 @@ public class PlayerMovement : MonoBehaviour
         {
             transform.position = new Vector3(cam.transform.position.x - (cam.orthographicSize * ratio), transform.position.y, transform.position.z);
         }
-
-        //if(!p_facingRight && horizontal > 0f)
-        //{
-        //    FlipPlayer();
-        //}
-        //else if(p_facingRight && horizontal < 0f)
-        //{
-        //    FlipPlayer();
-        //}
     }
 
+    public void PushFinished()
+    {
+        _animator.SetBool("push", false);
+    }
 
     public void Push()
     {
-        // Perform the raycast
-        RaycastHit2D hitMR = Physics2D.Raycast(transform.position + new Vector3(Math.Abs(transform.localScale.x)/2+0.1f,-transform.localScale.y/3, 0),
-            Vector2.right);
-        RaycastHit2D hitTR =
-            Physics2D.Raycast(transform.position + new Vector3(Math.Abs(transform.localScale.x)/2+.01f, transform.localScale.y/3, 0), Vector2.right);
-        RaycastHit2D hitML = Physics2D.Raycast(transform.position + new Vector3(-Math.Abs(transform.localScale.x)/2-0.1f, transform.localScale.y/3, 0),
-            Vector2.left);
-        RaycastHit2D hitTL =
-            Physics2D.Raycast(transform.position + new Vector3(-Math.Abs(transform.localScale.x)/2-0.1f, transform.localScale.y/3, 0), Vector2.left);
-        
-        
-        // Check if the ray hit something
-        List<GameObject> hitPlayers = new();
-        if (hitMR.collider != null && hitMR.collider.CompareTag("Player"))
+        _animator.SetBool("push", true);
+
+        // Adjust these values as needed
+        float pushRadius = 2.0f;
+
+        // Find colliders within the circular area
+        Collider2D[] hitColliders = Physics2D.OverlapCircleAll(transform.position, pushRadius);
+
+        // Check if the collider belongs to an enemy player and push them away
+        foreach (Collider2D collider in hitColliders)
         {
-            if (!hitPlayers.Contains(hitMR.collider.gameObject)&& Vector3.Distance(transform.position, hitMR.collider.gameObject.transform.position)<pushAwayRadius)
-                hitPlayers.Add(hitMR.collider.gameObject);
+            if (collider.CompareTag("Player") && collider.gameObject != gameObject)
+            {
+                StartCoroutine(ApplyPushOverTime(collider.transform, pushStrength));
+            }
         }
 
-        if (hitTR.collider != null && hitTR.collider.CompareTag("Player"))
-        {
-            if (!hitPlayers.Contains(hitTR.collider.gameObject)&& Vector3.Distance(transform.position, hitTR.collider.gameObject.transform.position)<pushAwayRadius)
-                hitPlayers.Add(hitTR.collider.gameObject);
-        }
+        _soundManager.PlaySoundEffect(_soundManager.SoundEffects.PushBack);
+    }
 
-        if (hitML.collider != null && hitML.collider.CompareTag("Player"))
-        {
-            if (!hitPlayers.Contains(hitML.collider.gameObject) && Vector3.Distance(transform.position, hitML.collider.gameObject.transform.position)<pushAwayRadius)
-                hitPlayers.Add(hitML.collider.gameObject);
-        }
+    private IEnumerator ApplyPushOverTime(Transform target, float pushStrength)
+    {
+        float stepDuration = 0.02f;  // Adjust as needed, smaller values for more frequent movements
+        float elapsedTime = 0.0f;
 
-        if (hitTL.collider != null && hitTL.collider.CompareTag("Player"))
-        {
-            if (!hitPlayers.Contains(hitTL.collider.gameObject)&& Vector3.Distance(transform.position, hitTL.collider.gameObject.transform.position)<pushAwayRadius)
-                hitPlayers.Add(hitTL.collider.gameObject);
-        }
+        Vector3 initialPosition = target.position;
+        Vector3 repelDirection = (target.position - transform.position).normalized;
 
-        if (hitPlayers.Count > 0)
+        while (elapsedTime < 0.1f)  // You can adjust the total duration here if needed
         {
-            _soundManager.PlaySoundEffect(_soundManager.SoundEffects.PushBack);
-        }
+            Vector3 targetPosition = initialPosition + repelDirection * pushStrength * (elapsedTime / 0.1f);
 
-        foreach (GameObject player in hitPlayers)
-        {
-            Vector2 repelDirection = (player.transform.position - transform.position).normalized;
-            player.GetComponent<Rigidbody2D>().AddForce(repelDirection * pushStrength, ForceMode2D.Force);
+            // Check if the target position is valid
+            if (!IsPositionBlocked(targetPosition))
+            {
+                target.position = targetPosition;
+            }
+            else
+            {
+                // If the position is blocked, stop pushing
+                break;
+            }
+
+            elapsedTime += stepDuration;
+            yield return new WaitForSeconds(stepDuration);
         }
     }
 
-    public void SetStuned()
+    private bool IsPositionBlocked(Vector3 position)
     {
-        // _powerupState = PowerupState.Stunned;
-        // remainingStun = stunTime;
+        // Cast a ray from the initial position to the target position
+        RaycastHit2D hit = Physics2D.Linecast(transform.position, position, LayerMask.GetMask("Ground"));
 
-        canMove = false;
-        StartCoroutine(ResetMovingAllowed());
+        // If the ray hits something, the position is blocked
+        return hit.collider != null && hit.collider.CompareTag("Block");
+    }
+
+
+    public void SetStunned()
+    {
+        _animator.SetBool("stunned", true);
         _soundManager.PlaySoundEffect(_soundManager.SoundEffects.PlayerStun);
         _powerupState = PowerupState.Stunned;
         remainingStun = stunTime;
+        canMove = false;
+        StartCoroutine(ResetMovingAllowed());
     }
 
 
@@ -220,22 +212,15 @@ public class PlayerMovement : MonoBehaviour
         yield return new WaitForSeconds(.2f);
         _readyForGroundCheck = true;
     }
-
-    void FlipPlayer()
-    {
-        p_facingRight = !p_facingRight;
-        Vector3 p_scale = transform.localScale;
-        p_scale.x *= -1;
-        transform.localScale = p_scale;
-    }
     
     private IEnumerator ResetMovingAllowed()
     {
-        // Wait for one second
         yield return new WaitForSecondsRealtime(stunTime);
-
-        // Set the flag to true, allowing the function to be called again
         canMove = true;
+        _powerupState = PowerupState.None;
+        _animator.SetFloat("v", 0);
+        _animator.SetFloat("h", 0); 
+        _animator.SetBool("stunned", false);
     }
 
     public void setJumpBoost()
@@ -248,5 +233,20 @@ public class PlayerMovement : MonoBehaviour
     {
         p_jumpingPower /= 1.3f;
         _powerupState = PowerupState.None;
+    }
+
+    public void SwapDisappearFinished()
+    {
+        _animator.SetBool("swapAppearFinished", false);
+        gameObject.transform.position = new Vector2(_animator.GetFloat("targetSwapX"), _animator.GetFloat("targetSwapY"));
+        _animator.SetBool("swap", false);
+    }
+
+    public void SwapAppearFinished()
+    {
+        canMove = true;
+        _animator.SetFloat("v", 0);
+        _animator.SetFloat("h", 0);    
+        _animator.SetBool("swapAppearFinished", true);
     }
 }
