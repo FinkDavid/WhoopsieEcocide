@@ -5,6 +5,8 @@ using UnityEditor;
 using UnityEngine;
 using static Unity.Collections.AllocatorManager;
 using UnityEngine.InputSystem;
+using TMPro;
+using UnityEngine.UI;
 
 public class GridManager : MonoBehaviour
 {
@@ -24,12 +26,15 @@ public class GridManager : MonoBehaviour
     [SerializeField] private Sprite blockSprite;
     [SerializeField] private GameObject[] players;
 
+    GameObject infoText;
+
     [SerializeField] private GameManager gameManager;
 
-    [SerializeField] private float placingRange = 3f;
-    [SerializeField] private float placingCooldown = 5f;
+    [SerializeField] public float placingRange = 3f;
+    [SerializeField] public float placingCooldown = 5f;
 
-    [SerializeField] private float destroyCooldown = 5f;
+    public float destroyCooldown = 0f;
+    [SerializeField] public float destroyCooldownStandard = 5f;
     
     private bool canPlace = true;
     private bool canDestroy = true;
@@ -53,6 +58,8 @@ public class GridManager : MonoBehaviour
 
     void Start()
     {
+        string tag = "powerUpTextPlayer" + gameObject.GetComponent<PlayerInformation>().playerID;
+        infoText = GameObject.FindGameObjectWithTag(tag);
         _soundManager = GameObject.FindGameObjectWithTag("SoundManager").GetComponent<SoundManager>();
         gameManager = GameObject.FindGameObjectWithTag("GameManager").GetComponent<GameManager>();
 
@@ -69,6 +76,7 @@ public class GridManager : MonoBehaviour
 
         _powerupManager = GameObject.FindGameObjectWithTag("PowerUpManager").GetComponent<PowerupManager>();
         _playerMovement = gameObject.GetComponent<PlayerMovement>();
+        UpdateInfoText();
     }
 
     public int getPlayerId()
@@ -172,8 +180,6 @@ public class GridManager : MonoBehaviour
         {
             Material block = blocks.Item1.GetMaterial();
             blocks = DrawBlocks.DrawBlock(getPlayerId());
-            // block = blocks.Item1;
-            
             switch (block)
             {
                 case Material.seal:
@@ -201,6 +207,9 @@ public class GridManager : MonoBehaviour
             {
                 Destroy(oldHighlighter);
             }
+
+            UpdateInfoText();
+            infoText.SetActive(false);
             StartCoroutine(ResetPlacingCooldown());
         }
         
@@ -262,7 +271,7 @@ public class GridManager : MonoBehaviour
 
             Debug.DrawRay(ray.origin, ray.direction * rayLength, Color.red);
 
-            if (hit.collider != null)
+            if (hit.collider != null && hit.collider.gameObject.tag != "Plattform")
             {
                 GameObject parent = hit.collider.gameObject.transform.parent.gameObject;
 
@@ -277,6 +286,7 @@ public class GridManager : MonoBehaviour
                     parent.transform.GetChild(i).gameObject.GetComponent<Animator>().SetBool("isDestroyed", true);
                 }
                 canDestroy = false;
+                _soundManager.PlaySoundEffect(_soundManager.SoundEffects.BlockDestroy);
                 StartCoroutine(ResetDestroyCooldown());
             }
         }
@@ -342,6 +352,8 @@ public class GridManager : MonoBehaviour
                 {
                     Destroy(oldHighlighter);
                 }
+                UpdateInfoText();
+                infoText.SetActive(false);
                 StartCoroutine(ResetPlacingCooldown());
             }
         }
@@ -360,21 +372,39 @@ public class GridManager : MonoBehaviour
         littleBlocksHighlighter = block.SetLittleBlocks(cellPosition, groundPhysics, grid, blockPrefab, allSprites, true, gameObject.GetComponent<PlayerInformation>().playerID);
     }
 
+    private void UpdateInfoText()
+    {
+        switch (blocks.Item1.GetMaterial())
+        {
+            case Material.seal: infoText.transform.GetChild(0).GetComponent<TextMeshProUGUI>().text = "B - SWAP"; break;
+            case Material.turtle: infoText.transform.GetChild(0).GetComponent<TextMeshProUGUI>().text = "B - FREEZE"; break;
+            case Material.crab: infoText.transform.GetChild(0).GetComponent<TextMeshProUGUI>().text = "B - BOOST"; break;
+            case Material.fish: infoText.transform.GetChild(0).GetComponent<TextMeshProUGUI>().text = "B - STUN"; break;
+            case Material.bird: infoText.transform.GetChild(0).GetComponent<TextMeshProUGUI>().text = "B - PUSH"; break;
+        }
+    }
+
     private IEnumerator ResetPlacingCooldown()
     {
-        // Wait for one second
         yield return new WaitForSeconds(placingCooldown);
 
-        // Set the flag to true, allowing the function to be called again
+        infoText.SetActive(true);
         canPlace = true;
     }
 
     private IEnumerator ResetDestroyCooldown()
     {
-        // Wait for one second
-        yield return new WaitForSeconds(destroyCooldown);
+        float elapsedTime = 0f;
+        destroyCooldown = destroyCooldownStandard; // Initial remaining time is set to destroyCooldown
 
-        // Set the flag to true, allowing the function to be called again
+        while (elapsedTime < destroyCooldownStandard)
+        {
+            yield return null; // Yield to the next frame
+            elapsedTime += Time.deltaTime; // Update elapsed time
+            destroyCooldown = destroyCooldownStandard - elapsedTime; // Calculate remaining time
+        }
+
+        infoText.SetActive(true);
         canDestroy = true;
     }
 

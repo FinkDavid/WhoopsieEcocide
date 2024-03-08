@@ -45,6 +45,8 @@ public class SoundManager : MonoBehaviour
 
     public void PlayMenu()
     {
+        _endScreendSource.Stop();
+        _source.Stop();
         _source.clip = _menu;
         _source.loop = true;
         _source.Play();
@@ -92,7 +94,7 @@ public class SoundManager : MonoBehaviour
 
     public void PlaySoundEffect(AudioClip effect, float? volume = null)
     {
-        _source.PlayOneShot(effect, volume ?? UnityEngine.Random.Range(.1f, .3f));
+        _source.PlayOneShot(effect, 0.4f);
     }
 
     private IEnumerator StartCountdownCoroutine()

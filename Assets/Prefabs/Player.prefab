@@ -577,8 +577,8 @@ MonoBehaviour:
   gameManager: {fileID: 0}
   placingRange: 5
   placingCooldown: 3
-  destroyCooldown: 5
-  sacreficeCooldown: 1
+  destroyCooldown: 0
+  destroyCooldownStandard: 5
   groundPhysics: {fileID: 6200000, guid: d928fd88ef46bcf49a88e12db0c171a6, type: 2}
   highlighterPrefab: {fileID: 6185488605100601086, guid: 08cd309b50435a048bdf3069e81b55f8, type: 3}
   grid: {fileID: 0}

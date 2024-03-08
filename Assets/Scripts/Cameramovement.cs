@@ -8,7 +8,7 @@ public class Cameramovement : MonoBehaviour
 {
     public float startDelay = 2;
     private float remainingFreeze = 0;
-    public float freeze = 2;
+    public float freeze = 3;
 
     public float speed = 1.5f;
 

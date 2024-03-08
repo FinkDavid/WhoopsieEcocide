@@ -55,7 +55,6 @@ public static class DrawBlocks
     {
         Block b;
 
-
         //For each player
         for (int playerCount = 0; playerCount < player.Length; playerCount++)
         {

@@ -19,20 +19,18 @@ public class CanvasManager : MonoBehaviour
     [SerializeField] Canvas _JoinCanvas;
     [SerializeField] bool[] _ReadyStatus = { false, false, false, false };
     [SerializeField] GameObject _Selected_Button;
-    [SerializeField] GameObject[] PlayerJoin_msg;
     [SerializeField] Sprite[] _Button_Images;
-    [SerializeField] GameObject Input_Image;
-    private InputDevice[] Player_Order;
-    private bool PressedOnce = false;
+    [SerializeField] GameObject[] playerBanners;
+    [SerializeField] GameObject startText;
     List<InputDevice> list = new List<InputDevice>();
+    int joinedPlayers = 0;
 
     // Start is called before the first frame update
     void Start()
     {
         _Selected_Button.GetComponent<Image>().sprite = SetNextImage(_Selected_Button.GetComponent<Image>().sprite);
-        Player_Order = InputSystem.devices.ToArray();
-        Input_Image.SetActive(false);
-
+        GameObject.FindGameObjectWithTag("SoundManager").GetComponent<SoundManager>().PlayMenu();
+        GameObject.FindGameObjectWithTag("GameManager").GetComponent<GameManager>().roundOver = false;
     }
 
     // Update is called once per frame
@@ -44,58 +42,46 @@ public class CanvasManager : MonoBehaviour
             {
                 if (device is Gamepad gamepad && gamepad.buttonWest.isPressed)
                 {
-                    // "X" button is pressed on the gamepad
-                    Debug.Log("X button pressed on controller: " + gamepad.displayName);
-
-                    // You can store the InputDevice if needed
                     InputDevice xPressedDevice = device;
 
-                    // Do something with the InputDevice or the controller here
                     if(!list.Contains(xPressedDevice))
+                    {
                         list.Add(xPressedDevice);
+                        playerBanners[joinedPlayers].transform.GetChild(0).gameObject.SetActive(false);
+                        playerBanners[joinedPlayers].transform.GetChild(1).gameObject.SetActive(true);
+                        joinedPlayers++;
+                    }
                 }
                 
                 if(list.Count > 0)
                 {
-                    PlayerJoin_msg[list.Count - 1].SetActive(false);
                     _ReadyStatus[list.Count - 1] = true;
                 }
+
+                if(list.Count >= 2)
+                {
+                    startText.SetActive(true);
+                }
+
                 if(list.Count >= 2 && Input.GetButtonDown("Press_UI"))
                 {
-                    if(!PressedOnce)
-                    {
-                        Input_Image.SetActive(true);
-                        PressedOnce = true;
-                    }
-                    else
-                    {
-                        GameObject.FindGameObjectWithTag("GameManager").GetComponent<GameManager>().inputDevices = list;
-                        SceneManager.LoadScene("TestSceneDavid");
-                    }
-
-                }
-            }
-
-            if (_ReadyStatus[0] && _ReadyStatus[1] && _ReadyStatus[2] && _ReadyStatus[3])
-            {
-                Input_Image.SetActive(true);
-                if (Input.GetButtonDown("Press_UI") && PressedOnce)
-                {
+                    GameObject.FindGameObjectWithTag("SoundManager").GetComponent<SoundManager>().StopMenu();
                     GameObject.FindGameObjectWithTag("GameManager").GetComponent<GameManager>().inputDevices = list;
                     SceneManager.LoadScene("TestSceneDavid");
                 }
-                PressedOnce = true;
             }
-        }
-        if (Input.GetKeyDown(KeyCode.Space))
-        {
-            for (int i = 0; i < _ReadyStatus.Length; i++)
+
+            if(_ReadyStatus[0] && _ReadyStatus[1] && _ReadyStatus[2] && _ReadyStatus[3])
             {
-                _ReadyStatus[i] = true;
+                if(Input.GetButtonDown("Press_UI"))
+                {
+                    GameObject.FindGameObjectWithTag("SoundManager").GetComponent<SoundManager>().StopMenu();
+                    GameObject.FindGameObjectWithTag("GameManager").GetComponent<GameManager>().inputDevices = list;
+                    SceneManager.LoadScene("TestSceneDavid");
+                }
             }
         }
 
-        //Debug.Log(Input.GetAxis("Vertical1"));
         if (Input.GetAxis("Vertical1") < 0)
         {
             GetNearestButton(direction.Up);
@@ -109,6 +95,7 @@ public class CanvasManager : MonoBehaviour
             Button buttonToExecute = _Selected_Button.GetComponent<Button>();
             buttonToExecute.onClick.Invoke();
         }
+
         if(Input.GetButtonDown("Go_Back"))
         {
             if(_JoinCanvas.enabled == true)
@@ -119,7 +106,12 @@ public class CanvasManager : MonoBehaviour
                 for(int i = 0; i < _ReadyStatus.Length;i++)
                 { 
                     _ReadyStatus[i] = false;    
+                    playerBanners[i].transform.GetChild(0).gameObject.SetActive(true);
+                    playerBanners[i].transform.GetChild(1).gameObject.SetActive(false);
                 }
+                list.Clear();
+                joinedPlayers = 0;
+                startText.SetActive(false);
             }
         }
 

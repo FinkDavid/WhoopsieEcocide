@@ -1071,8 +1071,10 @@ MonoBehaviour:
   Game_Canvas: {fileID: 763169888}
   Game_SnE_Canvas: {fileID: 2031746620}
   CountdownText_Move: {fileID: 146692534}
-  CountdownText_Game: {fileID: 1731759199}
   GameEnd_Text: {fileID: 1816046151}
+  _Selected_Button: {fileID: 0}
+  _Button_Images: []
+  playerImages: []
   BlackBar: {fileID: 542737089}
   _MovementCountdown: 3
   _GamestartCountdown: 10

@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -18,7 +19,7 @@ public class GameManager : MonoBehaviour
 
     public List<InputDevice> inputDevices = new List<InputDevice>();
 
-    //[SerializeField] private SoundManager _soundManager;
+    [SerializeField] private SoundManager _soundManager;
 
     void Awake()
     {
@@ -30,7 +31,6 @@ public class GameManager : MonoBehaviour
         {
             Destroy(gameObject);
         }
-        
     }
 
     void OnEnable()
@@ -42,10 +42,6 @@ public class GameManager : MonoBehaviour
     {
         if(scene.name == gameSceneName) 
 		{
-            //_soundManager.StopMenu();
-            //_soundManager.StartCountdown();
-
-            //For starting in the in game scene immediatly
             foreach (var device in InputSystem.devices)
             {
                 if (device is Gamepad gamepad)
@@ -56,13 +52,6 @@ public class GameManager : MonoBehaviour
             }
 
             playerCount = inputDevices.Count;
-            // Debug.Log(inputDevices.Length);
-            // foreach (InputDevice device in inputDevices)
-            // {
-            //     Debug.Log("Device name: " + device.name);
-            //     Debug.Log("Device type: " + device.GetType());
-            //     // You can access other properties and methods of the InputDevice class here
-            // }
             playerReferences = new GameObject[playerCount];
 			for(int i = 0; i < playerCount; i++)
             {   
@@ -78,17 +67,19 @@ public class GameManager : MonoBehaviour
                 playerReferences[i].GetComponent<Animator>().runtimeAnimatorController = playerAnimatorController[i];
             }
 		}
-        else if (scene.name == menuSceneName)
-        {
-            //_soundManager.PlayMenu();
-        }
+    }
+
+    public void PlayGameMusic()
+    {
+        _soundManager.StartCountdown();
     }
 
     public void OnPlayerDeath(int playerID)
     {
-        //_soundManager.PlaySoundEffect(_soundManager.SoundEffects.PlayerDeath, .5f);
+        _soundManager.PlaySoundEffect(_soundManager.SoundEffects.PlayerDeath, .5f);
         eliminationList.Add(playerID);
         playerReferences[playerID].SetActive(false);
+        GameObject.Find("Scriptholder").GetComponent<CanvasManager_In_Game>().DisablePlayerFrame(playerID);
 
         if(playerCount - eliminationList.Count == 1)
         {
@@ -99,12 +90,12 @@ public class GameManager : MonoBehaviour
 
     void GameOver()
     {
-        //_soundManager.StopSoundtrack();
+        _soundManager.StopSoundtrack();
         roundOver = true;  
         GameObject p = GameObject.FindGameObjectWithTag("Player");
         eliminationList.Add(p.GetComponent<PlayerInformation>().playerID);
         GameObject.Find("Scriptholder").GetComponent<CanvasManager_In_Game>().GameEnd();
-        //_soundManager.PlayWinning();
+        _soundManager.PlayWinning();
     }
 
 

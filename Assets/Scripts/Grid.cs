@@ -21,21 +21,13 @@ public class Grid : MonoBehaviour
 
     void Awake()
     {
-        
-
-        //Debug.Log(this.height);
         grid = new List<Cell[]>();
         for (int i = 0; i < height; i++)
         {
-            //grid[i] = new GameObject[width];
             grid.Add(new Cell[width]);
             for (int j = 0; j < width; j++)
             {
                 grid[i][j] = new Cell();
-
-                //GameObject block = new GameObject("Block");
-                //block.AddComponent<Block>();
-                //grid[i].Add(block);
             }
         }
     }

@@ -19,6 +19,11 @@ TagManager:
   - BlockGroup
   - SoundManager
   - PowerUpManager
+  - powerUpTextPlayer0
+  - powerUpTextPlayer1
+  - powerUpTextPlayer2
+  - powerUpTextPlayer3
+  - Plattform
   layers:
   - Default
   - TransparentFX

@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -19,15 +20,20 @@ public class CanvasManager_In_Game : MonoBehaviour
     [SerializeField] Canvas Game_SnE_Canvas;
 
     [SerializeField] TextMeshProUGUI CountdownText_Move;
-    [SerializeField] TextMeshProUGUI CountdownText_Game;
     [SerializeField] TextMeshProUGUI GameEnd_Text;
 
     [SerializeField] GameObject _Selected_Button;
     [SerializeField] Sprite[] _Button_Images;
+    [SerializeField] GameObject[] playerImages;
 
     [SerializeField] Image BlackBar;
 
     GameManager gameManager;
+
+    public GameObject fpsText;
+	public float deltaTime;
+    public bool showFPS = true;
+
 
     private float _secondCounter = 0;
     [SerializeField] float _MovementCountdown = 3;
@@ -37,35 +43,53 @@ public class CanvasManager_In_Game : MonoBehaviour
     public bool GameStart = false;
     public bool MoveStart = false;
     public int alivePlayers = 4;
+    private int playerCount;
 
-    // Start is called before the first frame update
+    private GridManager gridManager;
+
     void Start()
     {
+        playerCount = GameObject.FindGameObjectWithTag("GameManager").GetComponent<GameManager>().playerCount;
         Pause_Canvas.enabled = false;
         Game_Canvas.enabled = true;
         Game_SnE_Canvas.enabled = true;
-        CountdownText_Game.enabled = false;
         GameEnd_Text.enabled = false;
-        _Selected_Button.GetComponent<Image>().sprite = SetNextImage(_Selected_Button.GetComponent<Image>().sprite);
         gameManager = GameObject.FindGameObjectWithTag("GameManager").GetComponent<GameManager>();
+        
+        for(int i = 0; i < playerCount; i++)
+        {
+            Slider slider = playerImages[i].transform.GetChild(2).GetComponent<Slider>();
+            playerImages[i].SetActive(true);
+            slider.maxValue = gameManager.playerReferences[i].GetComponent<GridManager>().destroyCooldownStandard;
+            slider.value = 10 - 5 + gameManager.playerReferences[i].GetComponent<GridManager>().destroyCooldown;
+        }
+
+        _Selected_Button.GetComponent<Image>().sprite = SetNextImage(_Selected_Button.GetComponent<Image>().sprite);
         foreach (GameObject player in gameManager.playerReferences)
         {
             player.GetComponent<Rigidbody2D>().constraints = RigidbodyConstraints2D.FreezeAll;
         }
+
+        gameManager.PlayGameMusic();
     }
 
-    // Update is called once per frame
     void Update()
     {
-        _secondCounter += Time.deltaTime;
+        deltaTime += (Time.deltaTime - deltaTime) * 0.1f;
+		float fps = 1.0f / deltaTime;
+        if(showFPS)
+        {
+            fpsText.SetActive(true);
+            fpsText.GetComponent<Text>().text = Mathf.Ceil(fps).ToString();
+        }
 
+        _secondCounter += Time.deltaTime;
         _MovementCountdown -= (int)math.floor(_secondCounter);
 
         if (_MovementCountdown == 0)
         {
             MoveStart = true;
             CountdownText_Move.enabled = false;
-            CountdownText_Game.enabled = true;
             BlackBar.enabled = false;
 
             foreach (GameObject player in gameManager.playerReferences)
@@ -80,16 +104,6 @@ public class CanvasManager_In_Game : MonoBehaviour
                 CountdownText_Move.text = $"{_MovementCountdown}";
             }
         }
-        if(CountdownText_Game.enabled == true) 
-        {
-            _GamestartCountdown -= (int)_secondCounter;
-            CountdownText_Game.text = $"{_GamestartCountdown}";
-            if( _GamestartCountdown == 0) 
-            {
-                GameStart = true;
-                CountdownText_Game.enabled = false;
-            }
-        }
 
         if(GameEnd_Text.enabled == true)
         {
@@ -100,6 +114,11 @@ public class CanvasManager_In_Game : MonoBehaviour
             }
         }
         CheckInput();
+
+        for(int i = 0; i < playerCount; i++)
+        {
+            playerImages[i].transform.GetChild(2).GetComponent<Slider>().value = (gameManager.playerReferences[i].GetComponent<GridManager>().destroyCooldownStandard * 2) - (gameManager.playerReferences[i].GetComponent<GridManager>().destroyCooldownStandard + gameManager.playerReferences[i].GetComponent<GridManager>().destroyCooldown);
+        }
 
         if(_secondCounter / 1 >= 1) 
         {
@@ -234,6 +253,7 @@ public class CanvasManager_In_Game : MonoBehaviour
     {
         SceneManager.LoadScene("UI_Post_Game");
     }
+    
     Sprite SetNextImage(Sprite Current_sprite)
     {
         for (int i = 0; i < _Button_Images.Length; i++)
@@ -255,5 +275,10 @@ public class CanvasManager_In_Game : MonoBehaviour
             }
         }
         return null;
+    }
+
+    public void DisablePlayerFrame(int playerID)
+    {
+        playerImages[playerID].transform.GetChild(1).gameObject.SetActive(true);
     }
 }
